@@ -1,0 +1,81 @@
+import time
+import sys
+import matplotlib.pyplot as plt
+
+sys.setrecursionlimit(10000) 
+
+def hitung_iteratif(modal, bunga, bulan):
+    saldo = modal
+    for i in range(bulan):
+        saldo = saldo * (1 + bunga)
+    return saldo
+
+def hitung_rekursif(modal, bunga, bulan):
+    if bulan == 0:
+        return modal
+    else:
+        return hitung_rekursif(modal, bunga, bulan - 1) * (1 + bunga)
+
+def jalankan_benchmark():
+    daftar_input = [10, 50, 100, 500, 1000, 2500, 5000, 7500] 
+    
+    waktu_iteratif = []
+    waktu_rekursif = []
+    
+    modal_awal = 10000000
+    bunga_per_bulan = 0.01
+
+    print("-" * 65)
+    print(f"{'Bulan (N)':<12} | {'Iteratif (ms)':<15} | {'Rekursif (ms)':<15} | {'Status'}")
+    print("-" * 65)
+
+    for n in daftar_input:
+        start = time.perf_counter()
+        hasil_it = hitung_iteratif(modal_awal, bunga_per_bulan, n)
+        end = time.perf_counter()
+        durasi_it = (end - start) * 1000
+        waktu_iteratif.append(durasi_it)
+
+        durasi_rek = 0
+        status = "OK"
+        try:
+            start = time.perf_counter()
+            hasil_rek = hitung_rekursif(modal_awal, bunga_per_bulan, n)
+            end = time.perf_counter()
+            durasi_rek = (end - start) * 1000
+            waktu_rekursif.append(durasi_rek)
+        except RecursionError:
+            durasi_rek = None
+            waktu_rekursif.append(0)
+            status = "STACK OVERFLOW (GAGAL)"
+        
+        if durasi_rek is not None:
+            print(f"{n:<12} | {durasi_it:.5f} ms       | {durasi_rek:.5f} ms       | {status}")
+        else:
+            print(f"{n:<12} | {durasi_it:.5f} ms       | {'-':<15} | {status}")
+
+    return daftar_input, waktu_iteratif, waktu_rekursif
+
+
+def buat_grafik(x, y1, y2):
+    plt.figure(figsize=(10, 6))
+    
+    plt.plot(x, y1, marker='o', linestyle='-', color='blue', label='Iteratif O(N)')
+    
+    x_rek = [x[i] for i in range(len(y2)) if y2[i] > 0]
+    y_rek = [val for val in y2 if val > 0]
+    
+    plt.plot(x_rek, y_rek, marker='x', linestyle='--', color='red', label='Rekursif O(N)')
+
+    plt.title('Perbandingan Waktu Eksekusi: Iteratif vs Rekursif\n(Studi Kasus: Bunga Majemuk)', fontsize=14)
+    plt.xlabel('Jumlah Bulan (Input N)', fontsize=12)
+    plt.ylabel('Waktu Eksekusi (milidetik)', fontsize=12)
+    plt.legend()
+    plt.grid(True)
+    print("-" * 65)
+    plt.show()
+
+if __name__ == "__main__":
+    inputs, t_iter, t_rek = jalankan_benchmark()
+    
+    buat_grafik(inputs, t_iter, t_rek)
